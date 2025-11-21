@@ -2,6 +2,10 @@
 
 This document summarizes the custom setup for reliably connecting to an Android device wirelessly via ADB and casting the screen using Scrcpy on an Ubuntu/Zsh environment. This setup avoids manual port checking and aims to stabilize the connection on port 5555.
 
+## 📹 Preview
+
+<video src="preview-video.mp4" controls width="100%"></video>
+
 ---
 
 ## 🛠️ I. Prerequisites
