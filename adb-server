@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# --- CONFIGURATION (Sourced from a separate file) ---
+
+# Define the location of the config file
+CONFIG_FILE=~/adb_config.conf
+
+# Check if the config file exists and load variables
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+else
+    echo "ERROR: Configuration file $CONFIG_FILE not found. Exiting."
+    exit 1
+fi
+
+# Stable port is kept hardcoded as requested
+STABLE_PORT="5555"
+
+# ----------------------------------------------------
+
+echo "Starting ADB server..."
+adb start-server
+
+## 1. Try to connect to the stable port (5555) first
+echo "Attempting to connect to stable port $STABLE_PORT..."
+adb connect $PHONE_IP:$STABLE_PORT > /dev/null 2>&1
+
+# Check if the device is now listed (either via 5555 or an already existing USB/IP connection)
+CURRENT_DEVICE=$(adb devices | awk -v ip="$PHONE_IP" '$0 ~ ip {print $1; exit}')
+
+# If no device connected via 5555, proceed to scan the random range
+if [ -z "$CURRENT_DEVICE" ]; then
+    echo "Stable port connection failed. Scanning $PHONE_IP for open ADB port in range $RANDOM_PORT_RANGE..."
+    
+    # Scan for open ports in the random range
+    DETECTED_PORT=$(nmap -p $RANDOM_PORT_RANGE $PHONE_IP | awk '/tcp open/ {print $1}' | cut -d/ -f1)
+
+    if [ -n "$DETECTED_PORT" ]; then
+        DEVICE_ADDRESS="$PHONE_IP:$DETECTED_PORT"
+        echo "Port found: $DETECTED_PORT. Attempting connection to $DEVICE_ADDRESS..."
+        adb connect $DEVICE_ADDRESS
+        
+        # Re-check for connection after scanning
+        CURRENT_DEVICE=$(adb devices | awk -v ip="$PHONE_IP" '$0 ~ ip {print $1; exit}')
+    else
+        echo "ERROR: No ADB port found open on $PHONE_IP. Ensure 'Wireless debugging' is enabled."
+    fi
+fi
+
+# --- Post-Connection Check and Port Stabilization ---
+if [ -n "$CURRENT_DEVICE" ]; then
+    CONNECTED_PORT=$(echo "$CURRENT_DEVICE" | cut -d: -f2)
+    
+    echo "--- Current Connection Status ---"
+    adb devices
+    echo "Connected device: $CURRENT_DEVICE"
+    
+    # Check if the connected port is not 5555 and attempt to stabilize it
+    if [ "$CONNECTED_PORT" != "$STABLE_PORT" ]; then
+        echo "Connected port ($CONNECTED_PORT) is not stable ($STABLE_PORT)."
+        
+        # IMPORTANT: adb tcpip only works when connected via USB or currently active IP
+        echo "Attempting to stabilize port using 'adb tcpip $STABLE_PORT'..."
+        adb tcpip $STABLE_PORT
+        sleep 5
+        
+        # Disconnect from the random port and connect to the stable port
+        if [ $? -eq 0 ]; then
+            echo "Device restarted in TCP mode. Reconnecting to $PHONE_IP:$STABLE_PORT..."
+            adb disconnect $CURRENT_DEVICE
+            sleep 2
+            adb connect $PHONE_IP:$STABLE_PORT
+            sleep 5
+        else
+            echo "WARNING: 'adb tcpip $STABLE_PORT' failed. Ensure the USB cable is connected or the previous connection is active."
+        fi
+    else
+        echo "Connected port is already stable ($STABLE_PORT). No action needed."
+    fi
+else
+    echo "Failed to connect wirelessly."
+fi
+
+echo "--- Final ADB Devices ---"
+adb devices
+echo "---------------------------"

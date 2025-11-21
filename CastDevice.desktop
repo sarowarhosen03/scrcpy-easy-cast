@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Name=Cast Device (Scrcpy)
+Comment=Connects to wireless ADB, stabilizes port, and starts Scrcpy
+Exec=/bin/bash -c "zsh -i -c 'cast-device; exec bash'"
+Icon=/usr/bin/adb-device-cast/icon.png
+Categories=Utility;
