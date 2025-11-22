@@ -15,35 +15,41 @@ This document summarizes the custom setup for reliably connecting to an Android 
 ### Quick Setup
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/sarowarhosen03/scrcpy-easy-cast.git
    cd scrcpy-easy-cast
    ```
 
 2. **Create the installation directory and copy files:**
+
    ```bash
    sudo mkdir -p /usr/bin/adb-device-cast
-   sudo cp adb-server scrcpy scrcpy-server adb icon.png /usr/bin/adb-device-cast/
+   sudo cp adb-server scrcpy scrcpy-server adb scrcpy-wrapper.sh icon.png /usr/bin/adb-device-cast/
    sudo chmod +x /usr/bin/adb-device-cast/*
    ```
 
 3. **Copy the configuration file to your home directory:**
+
    ```bash
    cp adb_config.conf ~/adb_config.conf
    ```
+
    > **Note:** Edit `~/adb_config.conf` and update `PHONE_IP` with your device's static IP address.
 
 4. **Copy the adb-server script to your home directory:**
+
    ```bash
    cp adb-server ~/adb-server
    chmod +x ~/adb-server
    ```
 
 5. **Add aliases to your `~/.zshrc` file:**
+
    ```bash
    echo 'alias adb-connect="adb start-server"' >> ~/.zshrc
-   echo 'alias scrcpy-only="/usr/bin/adb-device-cast/scrcpy"' >> ~/.zshrc
-   echo 'alias cast-device="~/adb-server && /usr/bin/adb-device-cast/scrcpy"' >> ~/.zshrc
+   echo 'alias scrcpy-only="/usr/bin/adb-device-cast/scrcpy-wrapper.sh"' >> ~/.zshrc
+   echo 'alias cast-device="~/adb-server && /usr/bin/adb-device-cast/scrcpy-wrapper.sh"' >> ~/.zshrc
    source ~/.zshrc
    ```
 
@@ -98,17 +104,37 @@ The `adb-server` script is responsible for establishing the wireless connection 
 5.  **If connected on a random port**, it executes `adb tcpip 5555` to stabilize the port, disconnects from the random port, and immediately **reconnects to the stable port (`5555`)**.
     > **Note:** The `adb tcpip 5555` command requires the initial wireless connection to be active or the device to be plugged in via USB.
 
+### C. Scrcpy Wrapper Script (`scrcpy-wrapper.sh`)
+
+The `scrcpy-wrapper.sh` script provides an enhanced Scrcpy experience by managing screen timeout settings to prevent the device screen from turning off during casting.
+
+**Location:** `/usr/bin/adb-device-cast/scrcpy-wrapper.sh`
+
+**Functionality:**
+
+1.  Waits for an ADB device to be available (`adb wait-for-device`).
+2.  Saves the device's current screen timeout setting.
+3.  Sets the screen timeout to maximum (`2147483647` milliseconds) to keep the screen on during casting.
+4.  Launches Scrcpy with the `--stay-awake` flag for additional screen-on protection.
+5.  Restores the original screen timeout setting when Scrcpy exits.
+
+**Benefits:**
+
+- Prevents the Android device screen from turning off during casting sessions
+- Automatically restores your original screen timeout preference after casting
+- Ensures a seamless casting experience without manual screen wake-ups
+
 ---
 
 ## ⚡ III. Zsh Aliases (Workflow Commands)
 
 Aliases are defined in your `~/.zshrc` file to streamline the process.
 
-| Alias         | Command                                           | Purpose                                                                                                          |
-| :------------ | :------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------- |
-| `adb-connect` | `adb start-server`                                | Only starts the ADB server (useful for manual debugging).                                                        |
-| `scrcpy-only` | `/usr/bin/adb-device-cast/scrcpy`                 | Runs Scrcpy without checking the ADB server status.                                                              |
-| `cast-device` | `~/adb-server && /usr/bin/adb-device-cast/scrcpy` | **Recommended:** Runs the connection script (`adb-server`) first, and upon successful completion, starts Scrcpy. |
+| Alias         | Command                                                      | Purpose                                                                                                                                         |
+| :------------ | :----------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `adb-connect` | `adb start-server`                                           | Only starts the ADB server (useful for manual debugging).                                                                                       |
+| `scrcpy-only` | `/usr/bin/adb-device-cast/scrcpy-wrapper.sh`                 | Runs Scrcpy wrapper script (manages screen timeout) without checking the ADB server status.                                                     |
+| `cast-device` | `~/adb-server && /usr/bin/adb-device-cast/scrcpy-wrapper.sh` | **Recommended:** Runs the connection script (`adb-server`) first, and upon successful completion, starts Scrcpy with screen timeout management. |
 
 ### To Activate Aliases:
 
