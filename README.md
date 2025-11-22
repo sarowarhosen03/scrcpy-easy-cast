@@ -1,10 +1,56 @@
 # 📱 Wireless ADB & Scrcpy Management on Linux
 
+**Repository:** [https://github.com/sarowarhosen03/scrcpy-easy-cast](https://github.com/sarowarhosen03/scrcpy-easy-cast)
+
 This document summarizes the custom setup for reliably connecting to an Android device wirelessly via ADB and casting the screen using Scrcpy on an Ubuntu/Zsh environment. This setup avoids manual port checking and aims to stabilize the connection on port 5555.
 
 ## 📹 Preview
 
 <video src="preview-video.mp4" controls width="100%"></video>
+
+---
+
+## 📥 Installation
+
+### Quick Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/sarowarhosen03/scrcpy-easy-cast.git
+   cd scrcpy-easy-cast
+   ```
+
+2. **Create the installation directory and copy files:**
+   ```bash
+   sudo mkdir -p /usr/bin/adb-device-cast
+   sudo cp adb-server scrcpy scrcpy-server adb icon.png /usr/bin/adb-device-cast/
+   sudo chmod +x /usr/bin/adb-device-cast/*
+   ```
+
+3. **Copy the configuration file to your home directory:**
+   ```bash
+   cp adb_config.conf ~/adb_config.conf
+   ```
+   > **Note:** Edit `~/adb_config.conf` and update `PHONE_IP` with your device's static IP address.
+
+4. **Copy the adb-server script to your home directory:**
+   ```bash
+   cp adb-server ~/adb-server
+   chmod +x ~/adb-server
+   ```
+
+5. **Add aliases to your `~/.zshrc` file:**
+   ```bash
+   echo 'alias adb-connect="adb start-server"' >> ~/.zshrc
+   echo 'alias scrcpy-only="/usr/bin/adb-device-cast/scrcpy"' >> ~/.zshrc
+   echo 'alias cast-device="~/adb-server && /usr/bin/adb-device-cast/scrcpy"' >> ~/.zshrc
+   source ~/.zshrc
+   ```
+
+6. **Install nmap (if not already installed):**
+   ```bash
+   sudo apt install nmap
+   ```
 
 ---
 
