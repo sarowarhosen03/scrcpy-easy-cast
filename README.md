@@ -53,9 +53,9 @@ This document summarizes the custom setup for reliably connecting to an Android 
    source ~/.zshrc
    ```
 
-6. **Install nmap (if not already installed):**
+6. **Install nmap  and adb (if not already installed):**
    ```bash
-   sudo apt install nmap
+   sudo apt install nmap adb
    ```
 
 ---
